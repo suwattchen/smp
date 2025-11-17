@@ -1,0 +1,7 @@
+node_modules/
+secrets/*
+!.gitkeep
+.env
+apps/frontend/.next/
+apps/frontend/out/
+apps/frontend/node_modules/
