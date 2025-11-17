@@ -1,0 +1,5 @@
+node_modules/
+apps/frontend/node_modules/
+apps/frontend/.next/
+apps/frontend/.turbo/
+secrets/*

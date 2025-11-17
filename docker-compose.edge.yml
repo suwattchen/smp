@@ -1,0 +1,23 @@
+version: "3.9"
+
+networks:
+  sunmart_net:
+    name: ${SUNMART_NETWORK:-sunmart_net}
+    external: true
+
+secrets:
+  cloudflared_credentials:
+    file: ./secrets/cloudflared_credentials
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2024.1.0
+    command: tunnel run --config /etc/cloudflared/config.yml
+    volumes:
+      - ./infra/cloudflared/tunnel-config.yml:/etc/cloudflared/config.yml:ro
+    secrets:
+      - cloudflared_credentials
+    environment:
+      TUNNEL_CRED_FILE: ${CLOUDFLARE_TUNNEL_CRED_FILE:-/run/secrets/cloudflared_credentials}
+    networks:
+      - sunmart_net

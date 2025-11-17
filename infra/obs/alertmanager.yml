@@ -1,0 +1,8 @@
+route:
+  receiver: default-receiver
+
+discoveries: []
+
+receivers:
+  - name: default-receiver
+    webhook_configs: []
