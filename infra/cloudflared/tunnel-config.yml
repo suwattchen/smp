@@ -1,0 +1,7 @@
+tunnel: ${TUNNEL_ID:-update-me}
+credentials-file: ${CLOUDFLARE_TUNNEL_CRED_FILE:-/run/secrets/cloudflared_credentials}
+
+ingress:
+  - hostname: portal.example.com
+    service: http://kong:${KONG_PROXY_PORT:-8000}
+  - service: http_status:404
