@@ -1,0 +1,17 @@
+_format_version: "3.0"
+
+services:
+  - name: frontend
+    url: http://frontend:3000
+    routes:
+      - name: frontend-root
+        paths:
+          - /
+        strip_path: false
+  - name: core-api
+    url: http://core-go:8080
+    routes:
+      - name: core-api-route
+        paths:
+          - /api
+        strip_path: true

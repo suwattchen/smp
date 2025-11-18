@@ -1,0 +1,58 @@
+networks:
+  sunmart_net:
+    name: ${CORE_NETWORK:-sunmart_net}
+
+volumes:
+  pgdata:
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      # ผูกกับ DB_* จาก .env ให้มันตรงกัน
+      POSTGRES_USER: ${POSTGRES_USER:-sunmart}
+      POSTGRES_DB: ${POSTGRES_DB:-sunmart}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sunmart}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sunmart_net
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # ใช้ค่าเดียวกับ .env / ระบบเก่า
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-sunmart}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DB_NAME: ${DB_NAME:-sunmart}
+
+      # ค่าเริ่มต้นที่เหมาะกับเว็บแอปทั่วไป
+      POOL_MODE: ${POOL_MODE:-transaction}
+      AUTH_TYPE: ${AUTH_TYPE:-scram-sha-256}
+      LISTEN_PORT: ${LISTEN_PORT:-5432}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -h 127.0.0.1 -p ${LISTEN_PORT:-5432} -U ${DB_USER:-sunmart}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sunmart_net

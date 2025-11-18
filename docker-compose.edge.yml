@@ -1,0 +1,23 @@
+networks:
+  sunmart_net:
+    name: ${CORE_NETWORK:-sunmart_net}
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      TUNNEL_ORIGIN: kong:8000
+    volumes:
+      - ./infra/cloudflared/tunnel-config.yml:/etc/cloudflared/config.yml:ro
+    depends_on:
+      kong:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "cloudflared --version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - sunmart_net
+    restart: unless-stopped

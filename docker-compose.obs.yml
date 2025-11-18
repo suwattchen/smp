@@ -1,0 +1,139 @@
+networks:
+  obs_net:
+    name: ${OBS_NETWORK:-obs_net}
+  sunmart_net:
+    name: ${CORE_NETWORK:-sunmart_net}
+
+secrets:
+  portainer_admin_password:
+    file: ./secrets/portainer_admin_password
+
+services:
+  netdata:
+    image: netdata/netdata:stable
+    hostname: netdata
+    ports:
+      - "19999:19999"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:19999/api/v1/info"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - obs_net
+      - sunmart_net
+
+#  portainer:
+#    image: portainer/portainer-ce:latest
+#    user: "1000:988"
+#    ports:
+#      - "9443:9443"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - portainer_data:/data
+
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/api/status"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 3
+#    networks:
+#      - obs_net
+#      - sunmart_net
+
+  loki:
+    image: grafana/loki:2.9.7
+    command:
+      - "-config.file=/etc/loki/config.yml"
+      - "-ingester.wal-dir=/loki/wal" # <--- เพิ่มบรรทัดนี้
+    user: "10001"
+    volumes:
+      - ./infra/obs/loki/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - obs_net
+      - sunmart_net
+
+  promtail:
+    image: grafana/promtail:2.9.7
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./infra/obs/promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - obs_net
+      - sunmart_net
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus"]
+    volumes:
+      - ./infra/obs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - loki
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - obs_net
+      - sunmart_net
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./infra/obs/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9093/-/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - obs_net
+      - sunmart_net
+
+  watchtower:
+    image: containrrr/watchtower
+    command: ["--interval", "3600"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "watchtower --version"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+    networks:
+      - obs_net
+      - sunmart_net
+
+volumes:
+ # portainer_data:
+  loki_data:
+  prometheus_data:
+  loki_wal: # <--- ประกาศ Volume ใหม่
