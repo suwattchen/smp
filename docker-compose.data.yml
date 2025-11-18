@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   sunmart_net:
     name: ${SUNMART_NETWORK:-sunmart_net}
@@ -35,7 +33,7 @@ services:
       - sunmart_net
 
   pgbouncer:
-    image: bitnami/pgbouncer:1.21.0
+    image: bitnami/pgbouncer:1.23.0
     env_file: .env
     environment:
       POSTGRESQL_HOST: postgres

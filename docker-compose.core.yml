@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   sunmart_net:
     name: ${SUNMART_NETWORK:-sunmart_net}
