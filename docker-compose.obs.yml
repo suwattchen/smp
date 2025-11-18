@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   obs_net:
     name: ${OBS_NETWORK:-obs_net}
