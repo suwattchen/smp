@@ -31,28 +31,30 @@ services:
       - obs_net
       - sunmart_net
 
-  portainer:
-    image: portainer/portainer-ce:2.20.0
-    command: ["--admin-password-file", "/run/secrets/portainer_admin_password", "--http-enabled", "--tunnel-port", "8000"]
-    ports:
-      - "9000:9000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    secrets:
-      - portainer_admin_password
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/api/status"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    networks:
-      - obs_net
-      - sunmart_net
+#  portainer:
+#    image: portainer/portainer-ce:latest
+#    user: "1000:988"
+#    ports:
+#      - "9443:9443"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - portainer_data:/data
+
+#    healthcheck:
+#      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/api/status"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 3
+#    networks:
+#      - obs_net
+#      - sunmart_net
 
   loki:
     image: grafana/loki:2.9.7
-    command: ["-config.file=/etc/loki/config.yml"]
+    command:
+      - "-config.file=/etc/loki/config.yml"
+      - "-ingester.wal-dir=/loki/wal" # <--- เพิ่มบรรทัดนี้
+    user: "10001"
     volumes:
       - ./infra/obs/loki/config.yml:/etc/loki/config.yml:ro
       - loki_data:/loki
@@ -117,7 +119,7 @@ services:
       - sunmart_net
 
   watchtower:
-    image: containrrr/watchtower:1.7.1
+    image: containrrr/watchtower
     command: ["--interval", "3600"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -131,6 +133,7 @@ services:
       - sunmart_net
 
 volumes:
-  portainer_data:
+ # portainer_data:
   loki_data:
   prometheus_data:
+  loki_wal: # <--- ประกาศ Volume ใหม่

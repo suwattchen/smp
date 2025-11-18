@@ -1,7 +1,7 @@
-tunnel: ${CLOUDFLARE_TUNNEL_ID:-sunmart-demo}
+tunnel: 6bf6719c-e9af-411b-a7cf-4ad5059804d3
 credentials-file: /etc/cloudflared/credentials.json
 
 ingress:
-  - hostname: ${CLOUDFLARE_TUNNEL_HOSTNAME:-portal.example.com}
-    service: http://kong:8000
+  - hostname: sunmart.online
+    service: http://127.0.0.1:8000
   - service: http_status:404

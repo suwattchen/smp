@@ -4,7 +4,7 @@ networks:
 
 services:
   cloudflared:
-    image: cloudflare/cloudflared:2024.6.0
+    image: cloudflare/cloudflared
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     environment:
       TUNNEL_ORIGIN: kong:8000

@@ -19,7 +19,7 @@ logs-core:
 	docker compose $(COMPOSE_CORE) logs -f core-go kong nats frontend postgres pgbouncer
 
 edge-up:
-	docker compose -f docker-compose.edge.yml up -d
+	docker compose $(COMPOSE_CORE) -f docker-compose.edge.yml up -d
 
 edge-down:
 	docker compose -f docker-compose.edge.yml down
